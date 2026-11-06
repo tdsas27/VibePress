@@ -1,0 +1,31 @@
+{
+  "name": "vibepress",
+  "version": "0.1.0",
+  "private": true,
+  "description": "VibePress: a self-hosted site with admin, blog, apps, tools, feedback, firewall and more",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "setup": "node setup-admin.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-session": "^2.1.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^7.1.0",
+    "marked": "^12.0.2",
+    "otplib": "^12.0.1",
+    "qrcode-terminal": "^0.12.0",
+    "sanitize-html": "^2.13.0",
+    "multer": "^2.0.0"
+  },
+  "optionalDependencies": {
+    "sharp": "^0.35.5",
+    "maxmind": "^4.3.0"
+  }
+}

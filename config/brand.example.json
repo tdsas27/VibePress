@@ -1,0 +1,163 @@
+{
+  "name": "VibePress",
+  "tagline": "Your games, tools, apps and blog in one colorful place.",
+  "domain": "example.com",
+  "logo": "/shared/img/logo.webp",
+  "colors": {
+    "bg": "#110e1f",
+    "card": "#1c1833",
+    "ink": "#f6f3ff",
+    "muted": "#b9b0d9",
+    "red": "#ff3b6b",
+    "orange": "#ff9f1c",
+    "yellow": "#ffe14d",
+    "green": "#3ddc84",
+    "blue": "#2ec4ff",
+    "purple": "#a66bff"
+  },
+  "font": {
+    "family": "Fredoka",
+    "import": "https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap"
+  },
+  "nav": [
+    {
+      "label": "Games",
+      "href": "/games/"
+    },
+    {
+      "label": "3D Things",
+      "href": "/other/"
+    },
+    {
+      "label": "Tools",
+      "href": "/tools/"
+    },
+    {
+      "label": "Apps",
+      "href": "/apps/"
+    },
+    {
+      "label": "Blog",
+      "href": "/blog/"
+    },
+    {
+      "label": "Links",
+      "href": "/links/"
+    }
+  ],
+  "footer": {
+    "groups": [
+      {
+        "title": "Explore",
+        "links": [
+          {
+            "label": "Games",
+            "href": "/games/"
+          },
+          {
+            "label": "3D Things",
+            "href": "/other/"
+          },
+          {
+            "label": "Tools",
+            "href": "/tools/"
+          },
+          {
+            "label": "Apps",
+            "href": "/apps/"
+          }
+        ]
+      },
+      {
+        "title": "Community",
+        "links": [
+          {
+            "label": "Blog",
+            "href": "/blog/"
+          },
+          {
+            "label": "Links",
+            "href": "/links/"
+          },
+          {
+            "label": "Feedback",
+            "href": "/feedback/"
+          }
+        ]
+      }
+    ],
+    "cta": null
+  },
+  "sections": {
+    "games": {
+      "title": "Games",
+      "intro": "Play in your browser. No install needed.",
+      "image": "/shared/img/games.webp",
+      "tags": [
+        "games",
+        "game"
+      ]
+    },
+    "other": {
+      "title": "3D Things",
+      "intro": "Designs you can tweak and print.",
+      "image": "/shared/img/3d.webp",
+      "tags": [
+        "3d",
+        "3d-things",
+        "3d-printing",
+        "printing"
+      ]
+    },
+    "tools": {
+      "title": "Tools",
+      "intro": "Small utilities that do one job well.",
+      "image": "/shared/img/tools.webp",
+      "tags": [
+        "tools",
+        "tool"
+      ]
+    }
+  },
+  "home": {
+    "title": "",
+    "cards": [
+      {
+        "title": "Games",
+        "text": "Play in your browser, no install.",
+        "href": "/games/",
+        "image": "/shared/img/games.webp",
+        "color": "red"
+      },
+      {
+        "title": "3D Things",
+        "text": "Designs you can tweak and print.",
+        "href": "/other/",
+        "image": "/shared/img/3d.webp",
+        "color": "yellow"
+      },
+      {
+        "title": "Tools",
+        "text": "Small utilities that do one job well.",
+        "href": "/tools/",
+        "image": "/shared/img/tools.webp",
+        "color": "green"
+      },
+      {
+        "title": "Apps",
+        "text": "Download builds for your device.",
+        "href": "/apps/",
+        "image": "/shared/img/apps.webp",
+        "color": "blue"
+      },
+      {
+        "title": "Blog",
+        "text": "News, how-tos and behind the scenes.",
+        "href": "/blog/",
+        "image": "/shared/img/blog.webp",
+        "color": "purple"
+      }
+    ]
+  },
+  "support": null
+}

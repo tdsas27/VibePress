@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<meta name="description" content="{{DESC}}">
+<link rel="canonical" href="{{URL}}/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="{{NAME}}"><meta property="og:title" content="{{TITLE}}"><meta property="og:description" content="{{DESC}}"><meta property="og:url" content="{{URL}}/"><meta property="og:image" content="{{URL}}/shared/img/og.jpg"><meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/shared/tds.css">
+<style>
+.hero{text-align:center;padding:2.5rem 0 2rem;container-type:inline-size}
+.hero h1{margin:0;font-size:{{FS_VW}}vw;font-size:min(7.5rem,{{FS_CQI}}cqi);line-height:1.1;white-space:{{WS}}}
+.hero p{max-width:34rem;margin:1rem auto 0;color:var(--muted);font-size:1.25rem}
+</style>
+</head>
+<body data-home>
+<div id="tds-header"></div>
+<main>
+  <section class="hero">
+    <h1 class="bubble">{{NAME}}</h1>
+    <p>{{TAGLINE}}</p>
+  </section>
+  <section data-blog-feed data-limit="3" hidden></section>
+  <ul class="grid">
+    {{CARDS}}
+  </ul>
+</main>
+<div id="tds-footer"></div>
+<script src="/shared/tds.js"></script>
+<script src="/shared/blog-feed.js"></script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+# VibePress Nginx site (the installer fills in the __WORDS__). Certbot adds the HTTPS part for you.
+server {
+    listen 80;
+    server_name __DOMAIN__;
+    root __SITE_DIR__;
+    index index.html;
+
+    include __APP_DIR__/data/nginx-firewall.conf;     # block rules written by the admin Firewall page
+
+    error_page 404 /404.html;
+    gzip on;
+    gzip_types text/css application/javascript application/json image/svg+xml text/xml application/xml;
+
+    location / { try_files $uri $uri/ =404; }
+    location /scripts/ { deny all; }
+    location = /404.html { internal; }
+    location /shared/img/ { expires 30d; add_header Cache-Control "public"; try_files $uri =404; }
+    location /uploads/ { expires 30d; add_header X-Content-Type-Options nosniff; try_files $uri =404; }
+    location /downloads/ { add_header X-Content-Type-Options nosniff; try_files $uri =404; }
+
+    # Admin (hidden address, large uploads allowed here only)
+    location __ADMIN_PATH__/ {
+        client_max_body_size 1100m;
+        client_body_timeout 600s;
+        proxy_read_timeout 600s;
+        proxy_send_timeout 600s;
+        proxy_pass http://127.0.0.1:__PORT__;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Blog, links, feedback, apps and downloads are served by the app
+    location = /blog { return 301 /blog/; }
+    location /blog/ {
+        proxy_pass http://127.0.0.1:__PORT__;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    location ~ ^/(links|go|feedback|apps|get)(/|$) {
+        proxy_pass http://127.0.0.1:__PORT__;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Support {{NAME}}</title>
+<meta name="description" content="Ways to support {{NAME}}.">
+<link rel="canonical" href="{{URL}}/support/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="{{NAME}}"><meta property="og:title" content="Support {{NAME}}"><meta property="og:url" content="{{URL}}/support/"><meta property="og:image" content="{{URL}}/shared/img/og.jpg"><meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/shared/tds.css">
+<style>
+.quick{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:1rem;margin:1.5rem 0 2.5rem}
+.big{display:block;padding:1.4rem 1.2rem;border-radius:1.6rem;text-align:center;font-size:1.5rem;font-weight:700;text-decoration:none;color:#120d22;border:3px solid #0a0814;box-shadow:6px 6px 0 var(--c)}
+.big small{display:block;font-size:1rem;font-weight:600;margin-top:.2rem}
+.big:hover{transform:translate(-2px,-2px)}
+.card .net{margin:0 0 .6rem}
+.qr{background:#fff;border-radius:.8rem;padding:.5rem;margin:.4rem 0 .8rem;width:max-content;max-width:100%}
+.qr:empty{display:none}
+.qr img,.qr canvas{display:block;max-width:100%;height:auto}
+code{display:block;word-break:break-all;background:#0a0814;padding:.6rem .8rem;border-radius:.7rem;font-size:.95rem;margin-bottom:.4rem}
+button.btn{border:0;cursor:pointer;font:inherit;font-weight:700}
+</style>
+</head>
+<body>
+<div id="tds-header"></div>
+<main>
+  <h1 class="bubble" style="font-size:clamp(2.2rem,8vw,4rem);margin:.5rem 0">Support {{NAME}}</h1>
+  <p style="color:var(--muted);max-width:40rem">{{INTRO}}</p>
+  {{QUICK}}
+  {{CRYPTO}}
+  <p class="note">Contributions are tips and support, not tax-deductible donations.</p>
+</main>
+<div id="tds-footer"></div>
+<script src="/shared/tds.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+document.querySelectorAll("[data-copy]").forEach(function (b) {
+  b.addEventListener("click", function () {
+    var t = b.getAttribute("data-copy"), done = function () { var o = b.textContent; b.textContent = "Copied!"; setTimeout(function () { b.textContent = o; }, 1500); };
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(done);
+    else { var a = document.createElement("textarea"); a.value = t; document.body.appendChild(a); a.select(); document.execCommand("copy"); a.remove(); done(); }
+  });
+});
+if (window.QRCode) document.querySelectorAll("[data-qr]").forEach(function (el) {
+  new QRCode(el, { text: el.getAttribute("data-qr"), width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M });
+});
+</script>
+</body>
+</html>

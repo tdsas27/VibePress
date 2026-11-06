@@ -1,0 +1,3 @@
+PLACEHOLDER LICENSE. Replace this file with the terms you choose before distributing VibePress
+(for example a commercial license, an open-source license, or a per-site license).
+Copyright (c) the VibePress authors. All rights reserved.
