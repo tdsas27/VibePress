@@ -10,17 +10,18 @@ let B; try { B = JSON.parse(fs.readFileSync(BRAND_FILE, "utf8")); } catch (e) { 
 const name = String(B.name || "VibePress"), tagline = String(B.tagline || ""), url = (process.env.SITE_URL || (B.domain ? "https://" + B.domain : "")).replace(/\/+$/, "");
 const read = f => fs.readFileSync(path.join(TPL, f), "utf8"), write = (f, s) => { const p = path.join(SITE, f); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, s); console.log("wrote " + f); };
 const hex = /^#[0-9a-fA-F]{3,8}$/, link = /^(\/[\w\-./?=&#%]*|https:\/\/\S+)$/, COLORS = ["red", "orange", "yellow", "green", "blue", "purple"];
-const clean = (list, fb) => (Array.isArray(list) ? list : fb).filter(l => l && l.label && link.test(String(l.href || ""))).map(l => ({ label: String(l.label).slice(0, 40), href: l.href }));
+const clean = (list, fb) => (Array.isArray(list) ? list : fb).filter(l => l && l.label && link.test(String(l.href || ""))).map(l => ({ label: esc(String(l.label).slice(0, 40)), href: l.href }));
 
 /* 1. theme CSS: base + colour and font overrides */
-const vars = ["bg", "card", "ink", "muted", "red", "orange", "yellow", "green", "blue", "purple"].filter(k => (B.colors || {})[k] && hex.test(B.colors[k])).map(k => `--${k}:${B.colors[k]};`).join("");
+const vars = ["bg", "card", "ink", "muted", "red", "orange", "yellow", "green", "blue", "purple", "line", "bar", "foot", "onaccent", "glow1", "glow2"].filter(k => (B.colors || {})[k] && hex.test(B.colors[k])).map(k => `--${k}:${B.colors[k]};`).join("")
+  + ((B.colors || {}).scheme === "light" ? "--scheme:light;" : "");
 const fam = /^[\w \-]+$/.test((B.font || {}).family || "") ? B.font.family : "Fredoka";
 const imp = "import" in (B.font || {}) ? B.font.import : "https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap";
 write("shared/tds.css", (/^https:\/\/\S+$/.test(imp || "") ? `@import url("${imp}");\n` : "") + read("shared/tds.base.css") + `\n:root{${vars}--font:"${fam}","Trebuchet MS",system-ui,sans-serif;}\n`);
 
 /* 2. header and footer script */
 const nav = clean(B.nav, [{ label: "Games", href: "/games/" }, { label: "Blog", href: "/blog/" }]);
-const groups = ((B.footer || {}).groups || [{ title: "Explore", links: nav }]).map(g => ({ title: String(g.title || "").slice(0, 30), links: clean(g.links, []) })).filter(g => g.title && g.links.length);
+const groups = ((B.footer || {}).groups || [{ title: "Explore", links: nav }]).map(g => ({ title: esc(String(g.title || "").slice(0, 30)), links: clean(g.links, []) })).filter(g => g.title && g.links.length);
 const cta = (B.footer || {}).cta && link.test(B.footer.cta.href || "") ? { label: String(B.footer.cta.label || "Support us").slice(0, 40), href: B.footer.cta.href } : null;
 const brandObj = { name, logo: link.test(B.logo || "") ? B.logo : "/shared/img/logo.webp", tagline, cta };
 const block = `// @@BRAND-START (replaced by render-site.js from brand.json)\nconst TDS_LINKS = ${JSON.stringify(nav, null, 2)};\nconst TDS_FOOTER_GROUPS = ${JSON.stringify(groups, null, 2)};\nconst TDS_BRAND = ${JSON.stringify(brandObj, null, 2)};\n// @@BRAND-END`;

@@ -39,7 +39,7 @@ const seoTags = (title, o) => {                                       // canonic
   if (!h.includes('property="og:image"')) t += `<meta property="og:image" content="${esc(img)}">`;
   return t + `<meta property="og:site_name" content="${esc(BRAND)}"><meta name="twitter:card" content="summary_large_image">`;
 };
-const page = (title, body, o = {}) => `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${robotsTag(o)}${o.head || ""}${seoTags(title, o)}<title>${esc(title)} | ${esc(BRAND)}</title><link rel="stylesheet" href="/shared/tds.css"><style>form{display:grid;gap:.9rem;max-width:24rem}label{display:grid;gap:.3rem;font-weight:600}input{font:inherit;padding:.65rem .8rem;border-radius:.8rem;border:2px solid #3b3463;background:#1c1833;color:var(--ink)}button{font:inherit;font-weight:700;padding:.7rem 1.2rem;border:0;border-radius:2rem;background:var(--purple);color:#120d22;cursor:pointer}.err{color:var(--red);font-weight:600}</style></head><body><div id="tds-header"></div><main>${body}</main><div id="tds-footer"></div><script src="/shared/tds.js"></script></body></html>`;
+const page = (title, body, o = {}) => `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${robotsTag(o)}${o.head || ""}${seoTags(title, o)}<title>${esc(title)} | ${esc(BRAND)}</title><link rel="stylesheet" href="/shared/tds.css"><style>form{display:grid;gap:.9rem;max-width:24rem}label{display:grid;gap:.3rem;font-weight:600}input{font:inherit;padding:.65rem .8rem;border-radius:.8rem;border:2px solid var(--line);background:var(--card);color:var(--ink)}button{font:inherit;font-weight:700;padding:.7rem 1.2rem;border:0;border-radius:2rem;background:var(--purple);color:var(--onaccent);cursor:pointer}.err{color:var(--red);font-weight:600}</style></head><body><div id="tds-header"></div><main>${body}</main><div id="tds-footer"></div><script src="/shared/tds.js"></script></body></html>`;
 const h1 = t => `<h1 class="bubble" style="font-size:clamp(2.2rem,8vw,3.5rem);margin:.5rem 0">${t}</h1>`;
 const hidden = req => `<input type="hidden" name="_csrf" value="${csrf(req)}">`;
 const loginPage = (req, err) => page("Admin login", `${h1("Admin")}${err ? `<p class="err">${esc(err)}</p>` : ""}<form method="post" action="/admin/login">${hidden(req)}<label>Username<input name="username" autocomplete="username" required></label><label>Password<input type="password" name="password" autocomplete="current-password" required></label><button>Continue</button></form>`);
@@ -107,9 +107,9 @@ r.post("/verify", limiter, verifyCsrf, (req, res) => {
 });
 
 r.get("/", requireAuth, (req, res) => {
-  const tiles = [["✍️", "Blog", "var(--purple)", "/admin/blog/"], ["🔗", "Links", "var(--blue)", "/admin/links/"], ["💬", "Feedback", "var(--green)", "/admin/feedback/"], ["📣", "Social posts", "var(--orange)", "/admin/social/"], ["📱", "Apps", "var(--red)", "/admin/apps/"], ["🛡️", "Firewall", "var(--yellow)", "/admin/firewall/"], ["💾", "Backup", "var(--green)", "/admin/backup/"], ["📝", "Pages", "var(--blue)", "/admin/pages/"], ["🦶", "Footer", "var(--orange)", "/admin/site/footer"], ["🔎", "SEO", "var(--green)", "/admin/site/seo"], ["📈", "Traffic", "var(--blue)", "/admin/traffic/"]]
+  const tiles = [["✍️", "Blog", "var(--purple)", "/admin/blog/"], ["🔗", "Links", "var(--blue)", "/admin/links/"], ["💬", "Feedback", "var(--green)", "/admin/feedback/"], ["📣", "Social posts", "var(--orange)", "/admin/social/"], ["📱", "Apps", "var(--red)", "/admin/apps/"], ["🛡️", "Firewall", "var(--yellow)", "/admin/firewall/"], ["💾", "Backup", "var(--green)", "/admin/backup/"], ["📝", "Pages", "var(--blue)", "/admin/pages/"], ["🦶", "Footer", "var(--orange)", "/admin/site/footer"], ["🔎", "SEO", "var(--green)", "/admin/site/seo"], ["📈", "Traffic", "var(--blue)", "/admin/traffic/"], ["🧭", "Menu", "var(--purple)", "/admin/menu/"], ["🎨", "Theme", "var(--orange)", "/admin/theme/"]]
     .map(([i, n, c, href]) => `<li>${href ? `<a class="card" href="${href}"` : '<div class="card"'} style="--c:${c}"><span class="ico">${i}</span><h2>${n}</h2><p>${href ? "Open" : "Coming next"}</p>${href ? "</a>" : "</div>"}</li>`).join("");
-  res.send(page("Dashboard", `${h1("Dashboard")}<p style="color:var(--muted)">You are signed in. These sections are next on the build list.</p><ul class="grid">${tiles}</ul><form method="post" action="/admin/logout" style="margin-top:2rem">${hidden(req)}<button>Sign out</button></form>`));
+  res.send(page("Dashboard", `${h1("Dashboard")}<p style="color:var(--muted)">You are signed in. Pick a section to manage.</p><ul class="grid">${tiles}</ul><form method="post" action="/admin/logout" style="margin-top:2rem">${hidden(req)}<button>Sign out</button></form>`));
 });
 r.post("/logout", verifyCsrf, (req, res) => { req.session = null; res.clearCookie("tds_admin", { path: "/" }); res.redirect("/admin/login"); });
 
@@ -141,6 +141,10 @@ r.use("/backup", requireAuth, bk.admin);
 bk.start();
 const pages = require("./pages")({ page, h1, esc, hidden, verifyCsrf });
 r.use("/pages", requireAuth, pages.admin);
+const menu = require("./menu")({ page, h1, esc, hidden, verifyCsrf });
+r.use("/menu", requireAuth, menu.admin);
+const theme = require("./theme")({ page, h1, esc, hidden, verifyCsrf });
+r.use("/theme", requireAuth, theme.admin);
 const site = require("./site")({ page, h1, esc, hidden, verifyCsrf, pagesApi: pages, SITE_URL });
 r.use("/site", requireAuth, site.admin);
 site.start();

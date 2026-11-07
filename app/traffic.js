@@ -72,7 +72,7 @@ module.exports = ({ page, h1, esc, A, SITE_URL, country }) => {
     return R;
   };
 
-  const bars = (list, total, color = "var(--blue)") => list.map(([n, c]) => `<div class="row" style="gap:.4rem 1rem"><span style="flex:1;min-width:9rem;word-break:break-all">${esc(n)}</span><span class="meta" style="min-width:3.5rem;text-align:right">${c}</span><span style="flex:2;min-width:8rem;display:block;height:.7rem;background:#1c1833;border-radius:1rem"><span style="display:block;height:100%;width:${Math.max(2, Math.round(100 * c / Math.max(total, 1)))}%;background:${color};border-radius:1rem"></span></span></div>`).join("") || '<p class="meta">Nothing yet.</p>';
+  const bars = (list, total, color = "var(--blue)") => list.map(([n, c]) => `<div class="row" style="gap:.4rem 1rem"><span style="flex:1;min-width:9rem;word-break:break-all">${esc(n)}</span><span class="meta" style="min-width:3.5rem;text-align:right">${c}</span><span style="flex:2;min-width:8rem;display:block;height:.7rem;background:var(--card);border-radius:1rem"><span style="display:block;height:100%;width:${Math.max(2, Math.round(100 * c / Math.max(total, 1)))}%;background:${color};border-radius:1rem"></span></span></div>`).join("") || '<p class="meta">Nothing yet.</p>';
   const stat = (n, label, c) => `<div class="card" style="--c:${c};text-align:center"><div style="font-size:2rem;font-weight:700">${n}</div><p>${label}</p></div>`;
 
   const admin = express.Router();

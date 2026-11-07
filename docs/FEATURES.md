@@ -12,4 +12,6 @@
 * **Backup and restore**: data only or the entire site, daily automatic data backups, downloads and uploads.
 * **SEO**: sitemap, robots.txt, canonical and sharing tags, structured data, health check.
 * **Footer builder**: social icons you choose, legal links, copyright, plus starter **Privacy Policy** and **Cookie Policy** pages.
-* **Branding** from one file, `brand.json`.
+* **Menu editor** (Admin > Menu): add pages with one click, rename, re-order or remove top-menu links, add custom links, reset to the standard menu.
+* **Theme generator** (Admin > Theme): ready-made looks, a one-color palette generator (dark or light, full rainbow or shades of your color), 15 fonts, fine-tune every color, live preview, contrast warnings, one-click undo.
+* **Branding** from one file, `brand.json` (the Menu and Theme pages write to it for you).

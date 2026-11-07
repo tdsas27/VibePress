@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # VibePress installer for Ubuntu 22.04 / 24.04.
-# Run from the unpacked folder:   sudo ./install.sh
-# Optional (skip the questions):  sudo DOMAIN=example.com EMAIL=me@example.com SITE_NAME="My Site" ./install.sh
+# Run from the unpacked folder:   sudo bash install.sh
+# Optional (skip the questions):  sudo DOMAIN=example.com EMAIL=me@example.com SITE_NAME="My Site" bash install.sh
 set -euo pipefail
 
 say()  { printf '\n\033[1;35m==> %s\033[0m\n' "$*"; }
@@ -13,10 +13,10 @@ DIR="${VIBEPRESS_DIR:-/var/www/vibepress}"
 
 [ "$(id -u)" -eq 0 ] || exec sudo -E bash "${BASH_SOURCE[0]}" "$@"
 RUN_USER="${SUDO_USER:-}"
-{ [ -n "$RUN_USER" ] && [ "$RUN_USER" != "root" ]; } || die "Please log in as a normal user that has sudo (not root), then run: sudo ./install.sh"
+{ [ -n "$RUN_USER" ] && [ "$RUN_USER" != "root" ]; } || die "Please log in as a normal user that has sudo (not root), then run: sudo bash install.sh"
 . /etc/os-release
 [ "${ID:-}" = "ubuntu" ] || die "This installer is for Ubuntu 22.04 or 24.04."
-[ -f "$DIR/app/.env" ] && die "VibePress is already installed in $DIR. To upgrade, run ./update.sh from the new release folder."
+[ -f "$DIR/app/.env" ] && die "VibePress is already installed in $DIR. To upgrade, run: sudo bash update.sh from the new release folder."
 
 ask() {  # ask VAR "Question" "default"
   local var="$1" prompt="$2" def="${3:-}" val="${!1:-}"
@@ -53,13 +53,19 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get install -y nginx certbot python3-certbot-nginx curl ca-certificates gnupg openssl rsync tar
 
-NODE_OK=0
-if command -v node >/dev/null 2>&1; then [ "$(node -p 'process.versions.node.split(".")[0]')" -ge 20 ] && NODE_OK=1; fi
-if [ "$NODE_OK" = 0 ]; then
-  say "Installing Node.js 22 (from NodeSource)"
-  curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-  apt-get install -y nodejs
+node_major() { if command -v node >/dev/null 2>&1; then node -p 'process.versions.node.split(".")[0]'; else echo 0; fi; }
+if [ "$(node_major)" -lt 20 ]; then
+  say "Installing Node.js"
+  apt-get install -y nodejs npm || true
+  if [ "$(node_major)" -lt 20 ]; then
+    say "Ubuntu's own Node.js is older than 20, so using Node.js 22 from NodeSource"
+    curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+    apt-get install -y nodejs
+  fi
 fi
+command -v npm >/dev/null 2>&1 || apt-get install -y npm
+[ "$(node_major)" -ge 20 ] || die "Could not install Node.js 20 or newer. Install it yourself, then run this installer again."
+echo "Using Node.js $(node -v)"
 
 say "Copying VibePress into $DIR"
 mkdir -p "$DIR"/{app,site,templates,backups}

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VibePress updater. Run from the folder of the NEW release:   sudo ./update.sh
+# VibePress updater. Run from the folder of the NEW release:   sudo bash update.sh
 # Keeps your settings (.env), data, brand.json, uploads, downloads and custom images.
 set -euo pipefail
 say() { printf '\n\033[1;35m==> %s\033[0m\n' "$*"; }
@@ -7,7 +7,7 @@ die() { printf '\n\033[1;31mError:\033[0m %s\n' "$*" >&2; exit 1; }
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DIR="${VIBEPRESS_DIR:-/var/www/vibepress}"
 [ "$(id -u)" -eq 0 ] || exec sudo -E bash "${BASH_SOURCE[0]}" "$@"
-[ -f "$DIR/app/.env" ] || die "VibePress is not installed in $DIR. Run ./install.sh instead."
+[ -f "$DIR/app/.env" ] || die "VibePress is not installed in $DIR. Run: sudo bash install.sh instead."
 RUN_USER="$(stat -c %U "$DIR/app")"
 
 say "Backing up first"

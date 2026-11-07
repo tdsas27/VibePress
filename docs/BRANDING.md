@@ -20,3 +20,6 @@ File: `/var/www/vibepress/brand.json`. After editing, run `cd /var/www/vibepress
 The footer social icons, legal links and copyright are edited in the admin **Footer** page (no file editing needed).
 
 Colors affect the dark theme's accents. A light theme is planned for a later version.
+
+## Menu and Theme pages (0.1.2)
+Admin > Menu and Admin > Theme edit `brand.json` for you (`nav`, `colors`, `font`, and a `theme` note that remembers the generator settings). The previous file is kept as `brand.json.prev`, which is what the Undo button uses. New color names: `line`, `bar`, `foot`, `onaccent`, `glow1`, `glow2`, and `colors.scheme` (`dark` or `light`).

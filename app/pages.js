@@ -28,7 +28,7 @@ module.exports = ({ page, h1, esc, hidden, verifyCsrf }) => {
 <link rel="canonical" href="${esc(SITE_URL + urlOf(p))}">
 <meta property="og:type" content="website"><meta property="og:site_name" content="${esc(BRAND)}"><meta property="og:title" content="${esc(p.title)}"><meta property="og:description" content="${esc(p.description || p.title)}"><meta property="og:url" content="${esc(SITE_URL + urlOf(p))}"><meta property="og:image" content="${esc(SITE_URL)}/shared/img/og.jpg"><meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="/shared/tds.css">
-<style>.post{max-width:44rem}.post img{max-width:100%;height:auto;border-radius:1rem}.post pre{overflow-x:auto;background:#1c1833;padding:1rem;border-radius:1rem}.post code{background:#1c1833;padding:.1rem .35rem;border-radius:.4rem}</style>
+<style>.post{max-width:44rem}.post img{max-width:100%;height:auto;border-radius:1rem}.post pre{overflow-x:auto;background:var(--card);padding:1rem;border-radius:1rem}.post code{background:var(--card);padding:.1rem .35rem;border-radius:.4rem}</style>
 </head>
 <body>
 <div id="tds-header"></div>

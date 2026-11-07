@@ -16,7 +16,7 @@ cd /var/www/vibepress/app && node render-site.js
 
 ## Update to a new release
 ```
-tar xzf vibepress-NEW.tar.gz && cd vibepress && sudo ./update.sh
+tar xzf vibepress-NEW.tar.gz && cd vibepress && sudo bash update.sh
 ```
 
 ## Settings file
@@ -33,6 +33,12 @@ sudo nginx -t && sudo systemctl reload nginx
 sudo tail -n 30 /var/log/nginx/error.log
 sudo certbot renew --dry-run
 ```
+
+## Change the menu or the look
+Sign in to the admin, then:
+* **Menu**: pick a page and press *Add this page*, use the arrows to re-order, the cross to remove, then *Save menu*.
+* **Theme**: pick a look or choose a main color, adjust anything you like, check the live preview, then *Save theme*. *Undo the last change* puts the previous theme back.
+Both pages rebuild the site for you. If you do not see a change, hard-refresh (Ctrl+Shift+R).
 
 ## Something wrong?
 | Problem | Fix |

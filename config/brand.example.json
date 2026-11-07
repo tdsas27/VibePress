@@ -13,7 +13,14 @@
     "yellow": "#ffe14d",
     "green": "#3ddc84",
     "blue": "#2ec4ff",
-    "purple": "#a66bff"
+    "purple": "#a66bff",
+    "line": "#3b3463",
+    "bar": "#0a0814",
+    "foot": "#0a0814",
+    "onaccent": "#120d22",
+    "glow1": "#2a1747",
+    "glow2": "#0f2a4a",
+    "scheme": "dark"
   },
   "font": {
     "family": "Fredoka",

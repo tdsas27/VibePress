@@ -4,7 +4,7 @@ Your own colorful site with an admin area, blog, apps download page, tools and g
 
 ## What you need
 
-1. An **Ubuntu 22.04 or 24.04** server (a small VPS with 1 GB of memory is enough).
+1. An **Ubuntu 22.04 or newer** server (a small VPS with 1 GB of memory is enough).
 2. A **domain name** with an **A record** pointing to the server's IP address (give it a few minutes to spread).
 3. A normal user on the server with **sudo** (do not log in as root).
 4. An **authenticator app** on your phone (Authy, Google Authenticator, 1Password, and so on) for the admin sign-in.
@@ -14,15 +14,15 @@ Your own colorful site with an admin area, blog, apps download page, tools and g
 On your computer, send the package to the server (change the user and address):
 
 ```
-scp vibepress-0.1.0.tar.gz youruser@your-server-address:~
+scp vibepress-0.1.1.tar.gz youruser@your-server-address:~
 ```
 
 On the server:
 
 ```
-tar xzf vibepress-0.1.0.tar.gz
+tar xzf vibepress-0.1.1.tar.gz
 cd vibepress
-sudo ./install.sh
+sudo bash install.sh
 ```
 
 The installer asks three questions (your domain, your email, your site name), then does everything else: installs the web server and Node.js, copies the files, gets a free HTTPS certificate, starts VibePress as a background service, and finally asks you to **create your admin account** (a password and a QR code to scan with your authenticator app).
@@ -61,7 +61,7 @@ Download the new release, unpack it, and run:
 
 ```
 cd vibepress
-sudo ./update.sh
+sudo bash update.sh
 ```
 
 It makes a backup first, keeps your settings, data, uploads and custom images, and restarts the app.
@@ -88,7 +88,7 @@ sudo rm -r /var/www/vibepress        # deletes your site and data: make a backup
 
 ## Good to know
 
-* This is version 0.1.0 (a first release). The installer has been checked for syntax but should be tried on a fresh test server before you rely on it.
+* This is version 0.1.1 (a first release). The installer has been checked for syntax but should be tried on a fresh test server before you rely on it.
 * The font loads from Google Fonts by default (the privacy policy mentions this). Set `"font": {"import": ""}` in brand.json to use your device's fonts instead.
 * Section folders (`games`, `other`, `tools`) keep their addresses; you can rename their titles freely.
 * See `LICENSE.txt` for the terms.
