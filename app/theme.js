@@ -1,5 +1,6 @@
 /* Admin > Theme: generate or hand-pick a color palette (dark or light) and a font, preview it live, save it to brand.json. */
-const express = require("express"), UI = require("./ui"), brandfile = require("./brandfile");
+const express = require("express"), fs = require("fs"), path = require("path"), crypto = require("crypto"), multer = require("multer"), UI = require("./ui"), brandfile = require("./brandfile");
+let sharp = null; try { sharp = require("sharp"); } catch { /* optional: without it, the banner is saved as uploaded */ }
 
 module.exports = ({ page, h1, esc, hidden, verifyCsrf }) => {
   const FONTS = {                                   // key: [family, Google Fonts spec ("" = none), label]
@@ -32,16 +33,41 @@ module.exports = ({ page, h1, esc, hidden, verifyCsrf }) => {
   const state = () => {
     const b = brandfile.read(), c = Object.assign({}, CLASSIC, b.colors || {}), f = b.font || {};
     let key = Object.keys(FONTS).find(k => FONTS[k][0] === f.family) || "fredoka";
-    return { colors: c, scheme: (b.colors || {}).scheme === "light" ? "light" : "dark", font: key, meta: b.theme || null };
+    return { colors: c, scheme: (b.colors || {}).scheme === "light" ? "light" : "dark", font: key, meta: b.theme || null, credit: b.credit !== false };
   };
+
+  /* What is the web server really serving? Compare the saved theme with the stylesheet on disk, so a stale copy (a cache) is easy to tell from a failed rebuild. */
+  const siteStatus = () => {
+    const saved = (brandfile.read().colors || {}).bg, f = path.join(process.env.SITE_DIR || "/var/www/vibepress/site", "shared", "tds.css");
+    let css, when; try { css = fs.readFileSync(f, "utf8"); when = fs.statSync(f).mtime; } catch { return `<p class="err">The site's stylesheet could not be read (${esc(f)}). Press Rebuild site now.</p>`; }
+    const tail = css.slice(css.lastIndexOf(":root{")), m = /--bg:(#[0-9a-fA-F]{6})/.exec(tail), disk = m ? m[1].toLowerCase() : "the default";
+    const sw = c => /^#/.test(c) ? `<span style="display:inline-block;width:1.1em;height:1.1em;border:1px solid var(--line);border-radius:.25em;vertical-align:-.2em;background:${c}"></span> ` : "";
+    const at = when.toISOString().slice(0, 16).replace("T", " ") + " UTC";
+    if (saved && saved.toLowerCase() !== disk) return `<p class="err">The saved theme says the page background is ${sw(saved)}<strong>${esc(saved)}</strong>, but the stylesheet on your server still says ${sw(disk)}<strong>${esc(disk)}</strong>. The site was not rebuilt after the last save. Press <strong>Rebuild site now</strong>.</p>`;
+    return `<p class="meta">&#10003; Your server's stylesheet was last rebuilt <strong>${at}</strong> and uses the page background ${sw(disk)}<strong>${esc(disk)}</strong>, which matches your saved theme. If you still see a different color after a hard refresh, an old copy is cached between you and the server: purge the cache of your CDN if you use one (for example Cloudflare), and try a private window. <a href="/shared/tds.css?check=${Date.now()}" target="_blank" rel="noopener">See the stylesheet your server sends</a>.</p>`;
+  };
+
+  const UPLOAD_DIR = () => process.env.UPLOAD_DIR || "/var/www/vibepress/site/uploads";
+  const imgKind = b => {                                         // check the real file bytes, not the name
+    if (b.length < 12) return null;
+    if (b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF) return "jpg";
+    if (b.slice(0, 8).equals(Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]))) return "png";
+    if (b.slice(0, 4).toString() === "RIFF" && b.slice(8, 12).toString() === "WEBP") return "webp";
+    return null;
+  };
+  const HEIGHTS = ["small", "medium", "large"];
+  const bannerState = () => { const b = (brandfile.read().banner) || {}; return { enabled: !!b.enabled, image: b.image || "", height: HEIGHTS.includes(b.height) ? b.height : "medium", overlay: b.overlay !== false }; };
 
   const view = (req, msg, ok, st) => {
     st = st || state();
+    const bn = bannerState();
     const fontOpts = Object.keys(FONTS).map(k => `<option value="${k}" data-family="${esc(FONTS[k][0])}" data-url="${esc(urlOf(k))}"${st.font === k ? " selected" : ""}>${esc(FONTS[k][2])}</option>`).join("");
     const swatches = KEYS.map(k => `<label class="sw"><input type="color" name="c_${k}" id="c_${k}" value="${esc(st.colors[k])}"><span>${esc(LABELS[k])}</span></label>`).join("");
     return page("Theme", `${h1("Theme")}<p><a href="/admin/">&larr; Dashboard</a></p>
 ${msg ? `<p class="err">${esc(msg)}</p>` : ""}${ok ? `<p class="note" style="margin-top:0">${esc(ok)}</p>` : ""}
 <p class="meta">Pick a ready-made look, or generate your own from one color. Everything below can be fine-tuned by hand. Nothing changes on your site until you press <strong>Save theme</strong>.</p>
+<h3 class="cat">Is it live?</h3>${siteStatus()}
+<form class="inline" method="post" action="/admin/theme/rebuild">${hidden(req)}<button>Rebuild site now</button></form>
 <form class="wide" method="post" action="/admin/theme/save" id="themeform">${hidden(req)}
 <input type="hidden" name="scheme" id="scheme" value="${st.scheme}"><input type="hidden" name="meta" id="meta" value="${esc(JSON.stringify(st.meta || {}))}">
 <h3 class="cat">1. Start from a look</h3>
@@ -57,6 +83,7 @@ ${msg ? `<p class="err">${esc(msg)}</p>` : ""}${ok ? `<p class="note" style="mar
 <h3 class="cat">3. Font</h3>
 <label>Site font<select name="font" id="font">${fontOpts}</select></label>
 <p class="meta">Fonts load from Google Fonts. Choose "System font" if you do not want any outside download.</p>
+<label style="display:block;margin:.8rem 0"><input type="checkbox" name="credit" value="1" style="width:auto"${st.credit !== false ? " checked" : ""}> Show "Powered by VibePress" in the footer</label>
 <h3 class="cat">4. Live preview</h3>
 <div id="preview" class="pv"><div class="pvhead"><span class="bubble" style="font-size:1.3rem">Back To Site</span><span class="pvnav"><a href="#" tabindex="-1">Games</a><a href="#" tabindex="-1" aria-current="page">Blog</a></span></div>
 <div class="pvbody"><h2 class="bubble" style="font-size:2rem;margin:.2rem 0">Your site name</h2><p style="color:var(--muted)">A sentence of soft text. <a href="#" tabindex="-1">A link</a></p>
@@ -66,6 +93,15 @@ ${msg ? `<p class="err">${esc(msg)}</p>` : ""}${ok ? `<p class="note" style="mar
 <p id="warn" class="err" role="status"></p>
 <details><summary><strong>Fine-tune every color</strong></summary><div class="swatches">${swatches}</div></details>
 <p style="margin-top:1.2rem"><button>Save theme</button></p></form>
+<h3 class="cat">5. Header banner image (optional)</h3>
+<p class="meta">A wide image behind your site's top menu, on every page. Leave it off for a plain header. This part has its own <strong>Save banner</strong> button and is saved separately from the theme above.</p>
+<form method="post" action="/admin/theme/banner" enctype="multipart/form-data">${hidden(req)}
+${bn.image ? `<p><img src="${esc(bn.image)}" alt="" style="max-width:100%;max-height:8rem;border-radius:.6rem;display:block;margin-bottom:.6rem"></p>` : ""}
+<label style="display:block;margin:.4rem 0"><input type="checkbox" name="enabled" value="1" style="width:auto"${bn.enabled ? " checked" : ""}> Show the banner</label>
+<label>New image (JPG, PNG or WebP, wide works best; replaces the current one)<input type="file" name="image" accept="image/jpeg,image/png,image/webp"></label>
+<label>Height<select name="height"><option value="small"${bn.height === "small" ? " selected" : ""}>Small</option><option value="medium"${bn.height === "medium" ? " selected" : ""}>Medium</option><option value="large"${bn.height === "large" ? " selected" : ""}>Large</option></select></label>
+<label style="display:block;margin:.4rem 0"><input type="checkbox" name="overlay" value="1" style="width:auto"${bn.overlay ? " checked" : ""}> Darken the bottom edge slightly, so menu text stays readable</label>
+<p style="margin-top:.8rem"><button>Save banner</button>${bn.image ? ' <button name="remove" value="1" formnovalidate class="danger">Remove banner image</button>' : ""}</p></form>
 <div class="row" style="border:0">${brandfile.hasPrev() ? `<form class="inline" method="post" action="/admin/theme/undo">${hidden(req)}<button>↩ Undo the last change</button></form>` : ""}
 <form class="inline" method="post" action="/admin/theme/reset">${hidden(req)}<button class="danger" data-confirm="Go back to the original dark VibePress look?">Back to the original look</button></form></div>
 <style>.presets{display:flex;flex-wrap:wrap;gap:.6rem}.presets button{display:flex;align-items:center;gap:.5rem;padding:.5rem 1rem}.presets i{display:inline-flex;gap:2px}.presets i b{width:.7rem;height:1.1rem;border-radius:3px;display:block}
@@ -81,7 +117,7 @@ ${msg ? `<p class="err">${esc(msg)}</p>` : ""}${ok ? `<p class="note" style="mar
   };
 
   const admin = express.Router();
-  admin.get("/", (req, res) => res.send(view(req, "", req.query.saved === "1" ? "Theme saved. Your site now uses it (hard-refresh the site to see it)." : req.query.undone === "1" ? "Done. The previous theme is back." : "")));
+  admin.get("/", (req, res) => res.send(view(req, "", req.query.saved === "1" ? "Theme saved. Your site now uses it (hard-refresh the site to see it)." : req.query.undone === "1" ? "Done. The previous theme is back." : req.query.rebuilt === "1" ? "The site was rebuilt from your saved theme. Hard-refresh the site." : "")));
 
   admin.post("/save", verifyCsrf, async (req, res) => {
     const b = req.body, colors = {};
@@ -91,6 +127,7 @@ ${msg ? `<p class="err">${esc(msg)}</p>` : ""}${ok ? `<p class="note" style="mar
     let meta = null; try { const m = JSON.parse(String(b.meta || "{}")); if (m && typeof m === "object") meta = { mode: m.mode === "light" ? "light" : "dark", base: HEX.test(m.base) ? m.base : "#a66bff", spread: m.spread === "analogous" ? "analogous" : "rainbow", punch: ["soft", "bold", "neon"].includes(m.punch) ? m.punch : "bold" }; } catch {}
     const f = FONTS[keep.font], br = brandfile.read();
     br.colors = Object.assign(colors, { scheme: keep.scheme });
+    br.credit = req.body.credit === "1";
     br.font = { family: f[0], import: urlOf(keep.font) };
     if (meta) br.theme = meta; else delete br.theme;
     brandfile.write(br);
@@ -98,6 +135,34 @@ ${msg ? `<p class="err">${esc(msg)}</p>` : ""}${ok ? `<p class="note" style="mar
     if (!r.ok) { brandfile.undo(); return res.status(500).send(view(req, "The site could not be rebuilt, so nothing was changed. " + r.message, "", keep)); }
     res.redirect("/admin/theme/?saved=1");
   });
+  admin.post("/rebuild", verifyCsrf, async (req, res) => {
+    const r = await brandfile.render();
+    if (!r.ok) return res.status(500).send(view(req, "The site could not be rebuilt: " + r.message));
+    res.redirect("/admin/theme/?rebuilt=1");
+  });
+  const bannerUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1048576, files: 1 } });
+  admin.post("/banner", (req, res, next) => bannerUpload.single("image")(req, res, err => err ? res.status(400).send(view(req, "That image is too large (8 MB at most).", "")) : next()), verifyCsrf, async (req, res) => {
+    const cur = bannerState(), wantsOn = req.body.enabled === "1", dir = UPLOAD_DIR();
+    let image = req.body.remove === "1" ? "" : cur.image;
+    if (req.file) {
+      const kind = imgKind(req.file.buffer);
+      if (!kind) return res.status(400).send(view(req, "That file is not a JPG, PNG or WebP image.", ""));
+      fs.mkdirSync(dir, { recursive: true, mode: 0o755 });
+      try {
+        const out = sharp ? await sharp(req.file.buffer).rotate().resize({ width: 1920, withoutEnlargement: true }).webp({ quality: 82 }).toBuffer() : req.file.buffer;
+        const finalName = "banner-" + crypto.randomBytes(6).toString("hex") + "." + (sharp ? "webp" : kind);
+        fs.writeFileSync(path.join(dir, finalName), out, { mode: 0o644 });
+        if (cur.image) { const old = path.join(dir, path.basename(cur.image)); if (old.startsWith(dir)) fs.rmSync(old, { force: true }); }
+        image = "/uploads/" + finalName;
+      } catch (e) { return res.status(400).send(view(req, "That image could not be processed: " + String(e.message).slice(0, 150), "")); }
+    }
+    const next_ = { enabled: wantsOn && !!image, image, height: HEIGHTS.includes(req.body.height) ? req.body.height : "medium", overlay: req.body.overlay === "1" };
+    const b = brandfile.read(); b.banner = next_; brandfile.write(b);
+    const r = await brandfile.render();
+    if (!r.ok) { brandfile.undo(); return res.status(500).send(view(req, "The site could not be rebuilt, so nothing was changed. " + r.message, "")); }
+    res.redirect("/admin/theme/?saved=1");
+  });
+
   admin.post("/undo", verifyCsrf, async (req, res) => { if (brandfile.undo()) await brandfile.render(); res.redirect("/admin/theme/?undone=1"); });
   admin.post("/reset", verifyCsrf, async (req, res) => {
     const br = brandfile.read(); br.colors = Object.assign({}, CLASSIC, { scheme: "dark" }); br.font = { family: "Fredoka", import: urlOf("fredoka") }; delete br.theme;

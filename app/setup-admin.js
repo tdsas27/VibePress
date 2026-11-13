@@ -22,7 +22,7 @@ const ask = (q, secret) => new Promise(res => {
 
   const secret = authenticator.generateSecret();
   console.log("\nScan this QR code in Authy (Add Account > Scan QR Code):\n");
-  qr.generate(authenticator.keyuri(username, process.env.SITE_NAME || "VibePress", secret), { small: true });
+  qr.generate(authenticator.keyuri(username, require("./brand").name, secret), { small: true });
   console.log("Manual key if scanning fails: " + secret + "\n");
 
   let ok = false;

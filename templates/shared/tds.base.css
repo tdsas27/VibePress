@@ -104,3 +104,8 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--c,var(--p
 .bp-ex{margin:0;color:var(--muted);font-size:.95rem}
 .bp-more{display:inline-block;margin-top:.4rem;color:var(--blue);font-size:.9rem}
 @media (max-width:480px){.bp-thumb{width:72px;height:72px}}
+
+/* Optional header banner image (Admin > Theme). Hidden entirely unless a theme sets one. */
+.tds-banner{height:var(--tds-banner-h,220px);background-size:cover;background-position:center;background-repeat:no-repeat;position:relative}
+.tds-banner-overlay::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.35))}
+@media (max-width:640px){.tds-banner{height:min(var(--tds-banner-h,220px),38vw)}}

@@ -34,7 +34,7 @@ module.exports = ({ page, h1, esc, hidden, verifyCsrf, ld, SITE_URL }) => {
   pub.get("/", (req, res) => res.set("Cache-Control", "public, max-age=60").send(page("Apps", `<img class="sec-img" src="/shared/img/apps.webp" alt="" width="140" height="140">${h1("Apps")}<p class="meta">Download apps made by VibePress. Every file shows a checksum so you can verify it.</p>
 <ul class="grid">${all().map((a, i) => { const r = (a.releases || [])[0], pl = r ? [...new Set(r.files.map(PLAT))] : [];
     return `<li><a class="card" style="--c:${COLORS[i % 6]}" href="/apps/${esc(a.slug)}">${icon(a)}<h2>${esc(a.name)}</h2><p>${esc(a.tagline)}</p><p class="meta">${r ? "Version " + esc(r.version) + " | " + pl.join(", ") : "Coming soon"}${a.webUrl ? " | Web" : ""}</p></a></li>`; }).join("") || '<li class="note">No apps yet. Check back soon.</li>'}</ul>`,
-    { index: true, head: UI + CSS + '<meta name="description" content="Download apps made by ' + esc(process.env.SITE_NAME || "VibePress") + '.">' })));
+    { index: true, head: UI + CSS + '<meta name="description" content="Download apps made by ' + esc(require("./brand").name) + '.">' })));
   pub.get("/:slug", (req, res) => {
     const a = all().find(x => x.slug === req.params.slug);
     if (!a) return res.status(404).send(page("Not found", "<p>That app was not found.</p>"));

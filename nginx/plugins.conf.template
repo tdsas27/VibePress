@@ -1,0 +1,29 @@
+# VibePress plugin support (written by install.sh / update.sh; safe to regenerate).
+# /x/<plugin>/  : plugin pages. The "sandbox" header makes the browser treat each page as an isolated stranger:
+#                 no cookies, no access to your admin or any other page, scripts only from the plugin itself.
+#                 (allow-downloads lets a page offer a file download, for example a paid download link.)
+# /x-api/       : the data and server parts of plugins, answered by the VibePress app.
+location /x/ {
+    add_header Content-Security-Policy "sandbox allow-scripts allow-downloads allow-forms; default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; form-action 'none'; base-uri 'none'" always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy no-referrer always;
+    add_header Cache-Control "no-cache" always;
+    try_files $uri $uri/ =404;
+}
+# The theme files change whenever the owner saves a theme: always ask the server (a CDN or browser may keep a copy, but must check it first).
+location = /shared/tds.css { add_header Cache-Control "no-cache" always; try_files $uri =404; }
+location = /shared/tds.js  { add_header Cache-Control "no-cache" always; try_files $uri =404; }
+# The shared header/footer script on a plugin page reads this public file; a sandboxed page needs the CORS header to do so.
+location = /site.json {
+    add_header Access-Control-Allow-Origin "*" always;
+    add_header Cache-Control "no-cache" always;
+    try_files $uri =404;
+}
+location /x-api/ {
+    client_max_body_size 64k;
+    proxy_pass http://127.0.0.1:__PORT__;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}

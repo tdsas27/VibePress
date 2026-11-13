@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shop</title>
+<link rel="stylesheet" href="/shared/tds.css">
+<script src="/shared/tds.js" defer></script>
+<script src="qr.js" defer></script>
+<script src="store.js" defer></script>
+<style>
+  [hidden]{display:none !important}
+  .shop-note{color:var(--muted);max-width:42rem}
+  .coinbtns{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.8rem}
+  .coinbtns button,.pay button{border:0;cursor:pointer;font:inherit;font-weight:700}
+  .pay{max-width:40rem}
+  .pay .big{font-size:clamp(1.3rem,5vw,1.9rem);font-weight:800;word-break:break-all;margin:.2rem 0}
+  .pay code{display:block;word-break:break-all;background:color-mix(in srgb,var(--ink) 8%,transparent);border-radius:.6rem;padding:.5rem .7rem;margin:.3rem 0}
+  .pay .row2{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin:.3rem 0 .8rem}
+  .qrbox{background:#fff;border-radius:.8rem;padding:.4rem;width:max-content;max-width:100%;margin:.6rem 0}
+  .qrbox canvas{display:block;max-width:100%;height:auto;image-rendering:pixelated}
+  .warn{border-left:5px solid var(--orange);padding:.4rem .8rem;margin:.8rem 0}
+  .ok{border-left:5px solid var(--green);padding:.4rem .8rem;margin:.8rem 0}
+  .err{color:var(--red);font-weight:700}
+</style>
+</head>
+<body>
+<div id="tds-header"></div>
+<main>
+  <h1 class="bubble" style="font-size:clamp(2rem,7vw,3.5rem)">Shop</h1>
+  <p class="shop-note">Pay with Bitcoin, Ethereum or TON. Your download unlocks as soon as the payment shows up on the blockchain. No account needed.</p>
+  <p id="msg" role="status" aria-live="polite"></p>
+  <ul id="products" class="grid"></ul>
+  <section id="order" class="card pay" style="--c:var(--purple)" hidden></section>
+</main>
+<div id="tds-footer"></div>
+</body>
+</html>

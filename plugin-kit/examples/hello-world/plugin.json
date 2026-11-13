@@ -1,0 +1,9 @@
+{
+  "id": "hello-world",
+  "name": "Hello World",
+  "version": "1.0.0",
+  "author": "VibePress",
+  "description": "The smallest possible plugin: one page, no server code, no permissions.",
+  "vibepress": "0.2.0",
+  "pages": [{ "title": "Hello", "path": "index.html" }]
+}

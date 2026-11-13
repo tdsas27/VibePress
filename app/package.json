@@ -1,6 +1,6 @@
 {
   "name": "vibepress",
-  "version": "0.1.2",
+  "version": "0.5.1",
   "private": true,
   "description": "VibePress: a self-hosted site with admin, blog, apps, tools, feedback, firewall and more",
   "main": "server.js",

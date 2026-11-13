@@ -2,6 +2,7 @@
 # VibePress installer for Ubuntu 22.04 / 24.04.
 # Run from the unpacked folder:   sudo bash install.sh
 # Optional (skip the questions):  sudo DOMAIN=example.com EMAIL=me@example.com SITE_NAME="My Site" bash install.sh
+# Optional: VP_NOTIFY_INSTALL=yes|no  skips the one-time "let the developer know" question below.
 set -euo pipefail
 
 say()  { printf '\n\033[1;35m==> %s\033[0m\n' "$*"; }
@@ -51,7 +52,7 @@ fi
 say "Installing system packages (nginx, certbot, tools)"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
-apt-get install -y nginx certbot python3-certbot-nginx curl ca-certificates gnupg openssl rsync tar
+apt-get install -y nginx certbot python3-certbot-nginx curl ca-certificates gnupg openssl rsync tar unzip
 
 node_major() { if command -v node >/dev/null 2>&1; then node -p 'process.versions.node.split(".")[0]'; else echo 0; fi; }
 if [ "$(node_major)" -lt 20 ]; then
@@ -71,9 +72,12 @@ say "Copying VibePress into $DIR"
 mkdir -p "$DIR"/{app,site,templates,backups}
 rsync -a --exclude node_modules --exclude .env --exclude data "$SRC/app/" "$DIR/app/"
 rsync -a "$SRC/templates/" "$DIR/templates/"
+cp "$SRC/VERSION" "$DIR/VERSION" 2>/dev/null || true
 rsync -a "$DIR/templates/static/" "$DIR/site/"
 mkdir -p "$DIR"/site/{games,other,tools,apps,uploads,downloads} "$DIR/app/data"
 touch "$DIR/app/data/nginx-firewall.conf"
+echo "# Maintenance mode is off." > "$DIR/app/data/nginx-maintenance.conf"
+sed "s#__PORT__#3100#g" "$SRC/nginx/plugins.conf.template" > "$DIR/app/data/nginx-plugins.conf"
 if [ ! -f "$DIR/brand.json" ]; then
   SITE_NAME="$SITE_NAME" DOMAIN="$DOMAIN" node -e '
     const fs = require("fs"), b = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
@@ -142,7 +146,7 @@ WantedBy=multi-user.target
 UNIT
 cat > /etc/systemd/system/vibepress-firewall.service <<UNIT
 [Unit]
-Description=Reload Nginx for VibePress firewall rules
+Description=Reload Nginx for VibePress firewall and maintenance rules
 
 [Service]
 Type=oneshot
@@ -150,10 +154,11 @@ ExecStart=/bin/sh -c '/usr/sbin/nginx -t && /bin/systemctl reload nginx'
 UNIT
 cat > /etc/systemd/system/vibepress-firewall.path <<UNIT
 [Unit]
-Description=Watch VibePress firewall rules
+Description=Watch VibePress firewall and maintenance rules
 
 [Path]
 PathChanged=$DIR/app/data/nginx-firewall.conf
+PathChanged=$DIR/app/data/nginx-maintenance.conf
 
 [Install]
 WantedBy=multi-user.target
@@ -192,6 +197,42 @@ if [ "$HTTPS" = 1 ]; then
     warn "Certbot could not issue the certificate. You can retry later with:  sudo certbot --nginx -d $DOMAIN"
   fi
 fi
+
+notify_install() {   # a disclosed, skippable one-time note to the VibePress developer; never silent, never required
+  local to="sasquatch@tiedyesasquatch.online" answer="${VP_NOTIFY_INSTALL:-}"
+  say "One last thing"
+  echo "VibePress can send a one-time note to its developer ($to): this site's domain, its public IP address, and the"
+  echo "VibePress version, so they know where VibePress is running. Nothing else is sent, and nothing is sent later."
+  if [ -z "$answer" ]; then
+    if [ -r /dev/tty ]; then
+      read -r -p "Send this one-time note? [Y/n]: " ans </dev/tty || ans="n"
+      case "$ans" in [nN]*) answer="no" ;; *) answer="yes" ;; esac
+    else
+      answer="no"   # no terminal to ask in (e.g. an unattended/scripted install): default to NOT sending, never send silently
+    fi
+  fi
+  [ "$answer" = "yes" ] || { echo "Not sending it. (You can run it later: VP_NOTIFY_INSTALL=yes bash install.sh, or just email $to yourself.)"; return 0; }
+  local ip ver msg
+  ip="$(curl -fsS --max-time 4 https://api.ipify.org 2>/dev/null || echo unknown)"
+  ver="$(cat "$SRC/VERSION" 2>/dev/null || echo unknown)"
+  msg="VibePress installed.
+Domain:  $SCHEME://$DOMAIN
+IP:      $ip
+Version: $ver"
+  if command -v sendmail >/dev/null 2>&1; then
+    { printf 'To: %s\nSubject: VibePress installed: %s\n\n%s\n' "$to" "$DOMAIN" "$msg"; } | sendmail -t 2>/dev/null \
+      && echo "Sent." || warn "Could not send the note (sendmail failed). You can let the developer know yourself: $to"
+  elif command -v mail >/dev/null 2>&1; then
+    echo "$msg" | mail -s "VibePress installed: $DOMAIN" "$to" 2>/dev/null \
+      && echo "Sent." || warn "Could not send the note (mail failed). You can let the developer know yourself: $to"
+  else
+    curl -fsS --max-time 6 -F "_subject=VibePress installed: $DOMAIN" -F "domain=$SCHEME://$DOMAIN" -F "ip=$ip" -F "version=$ver" \
+      "https://formsubmit.co/ajax/$to" >/dev/null 2>&1 \
+      && echo "Sent." || warn "Could not send the note (no mail tool and no network reached). You can let the developer know yourself: $to"
+  fi
+}
+
+notify_install
 
 say "Create your admin account (password + two-step code)"
 sudo -u "$RUN_USER" bash -c "cd '$DIR/app' && node setup-admin.js" </dev/tty || warn "Admin setup did not finish. Run it again with:  cd $DIR/app && node setup-admin.js"

@@ -23,7 +23,11 @@ write("shared/tds.css", (/^https:\/\/\S+$/.test(imp || "") ? `@import url("${imp
 const nav = clean(B.nav, [{ label: "Games", href: "/games/" }, { label: "Blog", href: "/blog/" }]);
 const groups = ((B.footer || {}).groups || [{ title: "Explore", links: nav }]).map(g => ({ title: esc(String(g.title || "").slice(0, 30)), links: clean(g.links, []) })).filter(g => g.title && g.links.length);
 const cta = (B.footer || {}).cta && link.test(B.footer.cta.href || "") ? { label: String(B.footer.cta.label || "Support us").slice(0, 40), href: B.footer.cta.href } : null;
-const brandObj = { name, logo: link.test(B.logo || "") ? B.logo : "/shared/img/logo.webp", tagline, cta };
+const HEIGHTS = { small: 140, medium: 220, large: 320 };
+const banner = B.banner && B.banner.enabled && link.test(B.banner.image || "")
+  ? { image: B.banner.image, height: HEIGHTS[B.banner.height] || HEIGHTS.medium, overlay: B.banner.overlay !== false }
+  : null;
+const brandObj = { name: esc(name), logo: link.test(B.logo || "") ? B.logo : "/shared/img/logo.webp", tagline: esc(tagline), cta, banner, credit: B.credit !== false };
 const block = `// @@BRAND-START (replaced by render-site.js from brand.json)\nconst TDS_LINKS = ${JSON.stringify(nav, null, 2)};\nconst TDS_FOOTER_GROUPS = ${JSON.stringify(groups, null, 2)};\nconst TDS_BRAND = ${JSON.stringify(brandObj, null, 2)};\n// @@BRAND-END`;
 const t = read("shared/tds.template.js"), a = t.indexOf("// @@BRAND-START"), z = t.indexOf("// @@BRAND-END");
 if (a < 0 || z < 0) { console.error("tds.template.js is missing its brand markers"); process.exit(1); }
@@ -45,5 +49,11 @@ if (S && typeof S === "object") {
     `<li><div class="card" style="--c:var(--${COLORS[(i + 4) % 6]})"><h3>${esc(c.coin)}</h3><p class="net">${esc(c.network || "")}</p><div class="qr" data-qr="${esc(c.address)}"></div><code>${esc(c.address)}</code><button type="button" class="btn copy" data-copy="${esc(c.address)}">Copy address</button></div></li>`).join("");
   write("support/index.html", read("support.template.html").replace(/{{NAME}}/g, esc(name)).replace(/{{URL}}/g, esc(url)).replace("{{INTRO}}", esc(S.intro || "If something made your day, a tip helps keep it going. Thank you!"))
     .replace("{{QUICK}}", quick ? `<div class="quick">\n    ${quick}\n  </div>` : "").replace("{{CRYPTO}}", crypto ? `<h2 class="bubble" style="font-size:2rem;margin:0 0 .3rem">Crypto</h2>\n  <p style="color:var(--muted)">Scan the code or copy the address. Send each coin only on its own network, since an address from one network cannot receive another.</p>\n  <ul class="grid">${crypto}</ul>` : ""));
+}
+/* 5. give the stylesheet and script a version in the pages made here, so a browser or a CDN holding an old copy fetches the new one */
+const V = require("crypto").createHash("sha1").update(fs.readFileSync(path.join(SITE, "shared/tds.css"))).update(fs.readFileSync(path.join(SITE, "shared/tds.js"))).digest("hex").slice(0, 8);
+for (const f of ["index.html", "support/index.html"]) {
+  const file = path.join(SITE, f);
+  if (fs.existsSync(file)) fs.writeFileSync(file, fs.readFileSync(file, "utf8").replace(/(\/shared\/tds\.(?:css|js))(["'])/g, "$1?v=" + V + "$2"));
 }
 console.log("Done. Hard-refresh your browser to see changes.");

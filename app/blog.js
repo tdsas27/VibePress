@@ -5,7 +5,7 @@ const { marked } = require("marked");
 const sanitizeHtml = require("sanitize-html");
 
 module.exports = ({ page, h1, esc, hidden, verifyCsrf, ld }) => {
-  const BRAND = process.env.SITE_NAME || "VibePress";
+  const brand = require("./brand");
   const DIR = path.join(__dirname, "data", "posts");
   fs.mkdirSync(DIR, { recursive: true, mode: 0o700 });
   const SITE = process.env.SITE_URL || "http://localhost";
@@ -36,10 +36,10 @@ module.exports = ({ page, h1, esc, hidden, verifyCsrf, ld }) => {
 
   const listPage = (title, intro, posts, extra = "") => page(title, `<img class="sec-img" src="/shared/img/blog.webp" alt="" width="140" height="140">${h1(esc(title))}<p class="meta">${intro}</p>${posts.length ? posts.map(p =>
     `<article class="card" style="--c:var(--purple);margin:1.2rem 0"><h2><a href="/blog/${esc(p.slug)}" style="color:inherit;text-decoration:none">${esc(p.title)}</a></h2><p class="meta">${date(p.published)}</p><p>${esc(excerpt(p))}</p><div>${tagLinks(p)}</div></article>`).join("") : '<p class="note">No posts yet. Check back soon.</p>'}`,
-    { index: true, head: CSS + '<link rel="alternate" type="application/rss+xml" title="' + BRAND + ' Blog" href="/blog/rss.xml">' + extra });
+    { index: true, head: CSS + '<link rel="alternate" type="application/rss+xml" title="' + brand.name + ' Blog" href="/blog/rss.xml">' + extra });
 
   pub.get("/", (req, res) => res.send(listPage("Blog", "News, how-tos and behind the scenes. <a href=\"/blog/rss.xml\">RSS feed</a>", live(),
-    '<meta name="description" content="News, how-tos and behind the scenes from ' + BRAND + '.">')));
+    '<meta name="description" content="News, how-tos and behind the scenes from ' + brand.name + '.">')));
   const UPLOADS = process.env.UPLOAD_DIR || "/var/www/vibepress/site/uploads";
   const thumbOf = src => { const m = /^\/uploads\/([0-9a-f]{16})\.\w+$/.exec(src); return m && fs.existsSync(path.join(UPLOADS, m[1] + "-t.webp")) ? "/uploads/" + m[1] + "-t.webp" : src; };
   const unesc = s => s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
@@ -55,7 +55,7 @@ module.exports = ({ page, h1, esc, hidden, verifyCsrf, ld }) => {
   pub.get("/rss.xml", (req, res) => {
     const x = s => String(s).replace(/[<>&"']/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&apos;" }[c]));
     const items = live().slice(0, 20).map(p => `<item><title>${x(p.title)}</title><link>${SITE}/blog/${p.slug}</link><guid>${SITE}/blog/${p.slug}</guid><pubDate>${new Date(p.published).toUTCString()}</pubDate><description>${x(excerpt(p))}</description></item>`).join("");
-    res.type("application/rss+xml").send(`<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>${BRAND} Blog</title><link>${SITE}/blog/</link><description>News, how-tos and behind the scenes.</description>${items}</channel></rss>`);
+    res.type("application/rss+xml").send(`<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>${brand.name} Blog</title><link>${SITE}/blog/</link><description>News, how-tos and behind the scenes.</description>${items}</channel></rss>`);
   });
   pub.get("/tag/:tag", (req, res) => {
     const t = slugify(req.params.tag);

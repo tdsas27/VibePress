@@ -1,20 +1,20 @@
 /* Site settings in the admin: footer builder (social links, legal links), SEO settings, sitemap.xml + robots.txt, default policy pages. */
 const fs = require("fs"), path = require("path"), express = require("express");
-const store = require("./store"), UI = require("./ui"), policies = require("./policies");
+const brand = require("./brand"), brandfile = require("./brandfile"), store = require("./store"), UI = require("./ui"), policies = require("./policies");
 
 module.exports = ({ page, h1, esc, hidden, verifyCsrf, pagesApi, SITE_URL }) => {
-  const SITE = process.env.SITE_DIR || "/var/www/vibepress/site", BRAND = process.env.SITE_NAME || "VibePress";
+  const SITE = process.env.SITE_DIR || "/var/www/vibepress/site";
   const SOCIAL = [["twitch", "Twitch", "🎮"], ["itch", "itch.io", "🕹️"], ["youtube", "YouTube", "▶️"], ["x", "X", "✖️"], ["bluesky", "Bluesky", "🦋"], ["instagram", "Instagram", "📷"],
     ["tiktok", "TikTok", "🎵"], ["facebook", "Facebook", "👍"], ["discord", "Discord", "💬"], ["github", "GitHub", "🐙"], ["mastodon", "Mastodon", "🐘"],
     ["patreon", "Patreon", "❤️"], ["kofi", "Ko-fi", "☕"], ["bmac", "Buy Me A Coffee", "☕"], ["email", "Email", "✉️"]];
   const clip = (s, n) => String(s || "").trim().slice(0, n);
-  const footer = () => Object.assign({ copyright: "© {year} " + BRAND, tagline: "", contact: "", social: {}, legal: { privacy: true, cookies: true }, links: [] }, store.read("footer.json", {}));
+  const footer = () => Object.assign({ copyright: "© {year} {name}", tagline: "", contact: "", social: {}, legal: { privacy: true, cookies: true }, links: [] }, store.read("footer.json", {}));
   const seo = () => Object.assign({ index: true, description: "", image: "/shared/img/og.jpg" }, store.read("seo.json", {}));
   const readJson = f => { try { return JSON.parse(fs.readFileSync(f, "utf8")); } catch { return null; } };
 
   const publishFooter = () => {                                   // writes the public /site.json that the site footer reads
     const c = footer();
-    const out = { name: BRAND, copyright: c.copyright, tagline: c.tagline, image: seo().image,
+    const out = { name: brand.name, copyright: String(c.copyright).replace(/\{name\}/g, brand.name), tagline: c.tagline, image: seo().image,
       social: SOCIAL.filter(([k]) => c.social[k] && c.social[k].show && c.social[k].url).map(([k, n, i]) => ({ label: n, icon: i, url: k === "email" ? "mailto:" + c.social[k].url : c.social[k].url })),
       legal: [c.legal.privacy && { label: "Privacy Policy", url: "/privacy/" }, c.legal.cookies && { label: "Cookie Policy", url: "/cookies/" }].filter(Boolean).concat(c.links) };
     try { fs.writeFileSync(path.join(SITE, "site.json"), JSON.stringify(out)); } catch (e) { console.error("site: cannot write site.json: " + e.message); }
@@ -47,7 +47,7 @@ module.exports = ({ page, h1, esc, hidden, verifyCsrf, pagesApi, SITE_URL }) => 
     const c = footer(), have = k => store.read("pages.json").some(p => p.section === "root" && p.slug === k);
     return page("Footer builder", `${h1("Footer")}<p><a href="/admin/">&larr; Dashboard</a></p>${msg ? `<p class="err">${esc(msg)}</p>` : ""}
 <form class="wide" method="post" action="/admin/site/footer">${hidden(req)}
-<label>Copyright line ({year} becomes the current year)<input name="copyright" value="${esc(c.copyright)}" maxlength="160"></label>
+<label>Copyright line ({year} becomes the current year, {name} your site name)<input name="copyright" value="${esc(c.copyright)}" maxlength="160"></label>
 <label>Short blurb next to your logo (optional; blank = the default line)<input name="tagline" value="${esc(c.tagline)}" maxlength="160"></label>
 <label>Contact email (used inside the privacy and cookie policies; not shown unless you tick Email below)<input name="contact" value="${esc(c.contact)}" maxlength="120"></label>
 <h3 class="cat">Social links: tick the ones that should show</h3>
@@ -62,9 +62,36 @@ ${[0, 1, 2].map(i => `<div class="row"><input name="ll${i}" value="${esc((c.link
 <p class="meta">Privacy Policy: <strong>${have("privacy") ? "created" : "not created yet"}</strong> &nbsp; Cookie Policy: <strong>${have("cookies") ? "created" : "not created yet"}</strong>. They are starter texts written to match what this site does. Edit them any time in <a href="/admin/pages/">Pages</a>, and have them checked for your situation, especially if you add analytics or ads.</p>
 <form class="inline" method="post" action="/admin/site/policies">${hidden(req)}<button>Create the missing policy pages</button></form>`, { head: UI });
   };
+  /* ---- Site name: one place to rename the site (header, footer, page titles, search results) ---- */
+  const nameView = (req, msg, ok) => { const b = brandfile.read();
+    return page("Site name", `${h1("Site name")}<p><a href="/admin/">&larr; Dashboard</a></p>${msg ? `<p class="err">${esc(msg)}</p>` : ""}${ok ? `<p class="note" style="margin-top:0">${esc(ok)}</p>` : ""}
+<form class="wide" method="post" action="/admin/site/name">${hidden(req)}
+<label>Site name (shown in the header, the footer, browser tabs and search results)<input name="name" value="${esc(brand.name)}" maxlength="60" required></label>
+<label>Home page title (the browser-tab and search-result title of the home page; blank = the site name)<input name="title" value="${esc(brand.homeTitle())}" maxlength="70" placeholder="${esc(brand.name)}"></label>
+<label>Tagline (the line under the big name on the home page; also the home page's search description)<input name="tagline" value="${esc(b.tagline || "")}" maxlength="160"></label>
+<button>Save and rebuild the site</button></form>
+<p class="meta">Saving rebuilds the home page, the header and footer, and your page titles. Your own text is left alone: privacy and cookie policies, blog posts and pages you wrote keep any place you typed the old name by hand, so edit those in <a href="/admin/pages/">Pages</a> if needed. Hard-refresh your site afterwards.</p>`, { head: UI }); };
+  admin.get("/name", (req, res) => res.send(nameView(req, "", req.query.done ? "Saved. The site was rebuilt with the new name; hard-refresh your site to see it." : "")));
+  admin.post("/name", verifyCsrf, async (req, res) => {
+    const name = brand.clean(req.body.name).slice(0, 60), title = brand.clean(req.body.title).slice(0, 70), tagline = brand.clean(req.body.tagline).slice(0, 160), old = brand.name;
+    if (!name) return res.status(400).send(nameView(req, "Please enter a site name."));
+    const b = brandfile.read(); b.name = name; b.tagline = tagline; b.home = Object.assign({}, b.home, { title });
+    brandfile.write(b);
+    const stored = store.read("footer.json", null);                           // a copyright line that still has the old name typed in follows the rename
+    if (stored && stored.copyright === "© {year} " + old) { stored.copyright = "© {year} {name}"; store.write("footer.json", stored); }
+    const r = await brandfile.render();
+    publishFooter();
+    const e = x => String(x).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    for (const sec of ["games", "other", "tools"]) {                          // section pages made earlier have the old name in their <title>
+      const f = path.join(SITE, sec, "index.html"); try { const h = fs.readFileSync(f, "utf8"), t = h.replace(/(<title>[^<]*\| )([^<]*)(<\/title>)/, (m, a, n, z) => n === e(old) ? a + e(name) + z : m); if (t !== h) fs.writeFileSync(f, t); } catch { /* no such page */ }
+    }
+    try { if (pagesApi && pagesApi.rebuildAll) await pagesApi.rebuildAll(); } catch { /* pages keep the old name until Rebuild all pages */ }
+    if (!r.ok) return res.status(500).send(nameView(req, "The name was saved, but the site could not be rebuilt: " + r.message + " Try Admin > Theme > Rebuild site now."));
+    res.redirect("/admin/site/name?done=1");
+  });
   admin.get("/footer", async (req, res) => res.send(await footerView(req)));
   admin.post("/footer", verifyCsrf, async (req, res) => {
-    const b = req.body, c = { copyright: clip(b.copyright, 160) || "© {year} " + BRAND, tagline: clip(b.tagline, 160), contact: clip(b.contact, 120), social: {},
+    const b = req.body, c = { copyright: clip(b.copyright, 160) || "© {year} {name}", tagline: clip(b.tagline, 160), contact: clip(b.contact, 120), social: {},
       legal: { privacy: b.show_privacy === "1", cookies: b.show_cookies === "1" }, links: [] };
     for (const [k, n] of SOCIAL) {
       const u = clip(b["url_" + k], 200);
@@ -79,10 +106,10 @@ ${[0, 1, 2].map(i => `<div class="row"><input name="ll${i}" value="${esc((c.link
     store.write("footer.json", c); publishFooter(); res.redirect("/admin/site/footer");
   });
   admin.post("/policies", verifyCsrf, async (req, res) => {
-    const c = footer(), v = { name: BRAND, domain: SITE_URL.replace(/^https?:\/\//, ""), contact: c.contact ? `[${c.contact}](mailto:${c.contact})` : "[the feedback form](/feedback/)",
+    const c = footer(), v = { name: brand.name, domain: SITE_URL.replace(/^https?:\/\//, ""), contact: c.contact ? `[${c.contact}](mailto:${c.contact})` : "[the feedback form](/feedback/)",
       date: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) };
-    await pagesApi.ensure({ section: "root", slug: "privacy", title: "Privacy Policy", description: `How ${BRAND} handles your information.`, content: policies.privacy(v) });
-    await pagesApi.ensure({ section: "root", slug: "cookies", title: "Cookie Policy", description: `How ${BRAND} uses cookies.`, content: policies.cookies(v) });
+    await pagesApi.ensure({ section: "root", slug: "privacy", title: "Privacy Policy", description: `How ${brand.name} handles your information.`, content: policies.privacy(v) });
+    await pagesApi.ensure({ section: "root", slug: "cookies", title: "Cookie Policy", description: `How ${brand.name} uses cookies.`, content: policies.cookies(v) });
     writeSeo(); res.redirect("/admin/site/footer");
   });
 

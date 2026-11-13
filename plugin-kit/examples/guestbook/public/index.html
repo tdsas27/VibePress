@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guestbook</title>
+<link rel="stylesheet" href="/shared/tds.css">
+<script src="/shared/tds.js" defer></script>
+<script src="guestbook.js" defer></script>
+</head>
+<body>
+<div id="tds-header"></div>
+<main>
+<h1 class="bubble" style="font-size:clamp(2rem,7vw,3.5rem)">Guestbook</h1>
+<form id="f" class="card" style="--c:var(--blue);display:grid;gap:.7rem;max-width:34rem">
+  <label>Your name <input name="name" maxlength="40" required></label>
+  <label>Message <textarea name="message" maxlength="280" rows="3" required></textarea></label>
+  <label>Mood <select name="mood"><option value="">(skip)</option><option>happy</option><option>curious</option><option>silly</option></select></label>
+  <button class="btn" style="--c:var(--purple);border:0;cursor:pointer;font:inherit;font-weight:700">Sign the guestbook</button>
+  <p id="status" aria-live="polite" style="margin:0"></p>
+</form>
+<h2>Messages</h2>
+<ul id="list" style="list-style:none;padding:0;display:grid;gap:.8rem"></ul>
+</main>
+<div id="tds-footer"></div>
+</body>
+</html>

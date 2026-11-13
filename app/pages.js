@@ -6,7 +6,7 @@ const { marked } = require("marked"), sanitizeHtml = require("sanitize-html");
 const store = require("./store"), UI = require("./ui"), brand = require("./brand");
 
 module.exports = ({ page, h1, esc, hidden, verifyCsrf }) => {
-  const FILE = "pages.json", SITE = process.env.SITE_DIR || "/var/www/vibepress/site", BRAND = process.env.SITE_NAME || "VibePress", SITE_URL = (process.env.SITE_URL || "http://localhost").replace(/\/+$/, "");
+  const FILE = "pages.json", SITE = process.env.SITE_DIR || "/var/www/vibepress/site", SITE_URL = (process.env.SITE_URL || "http://localhost").replace(/\/+$/, "");
   const SECTIONS = { games: { name: brand.section("games", "Games"), dir: "games" }, other: { name: brand.section("other", "3D Things"), dir: "other" }, tools: { name: brand.section("tools", "Tools"), dir: "tools" }, root: { name: "Site (top level, like /about/)", dir: "" } };
   const RESERVED = ["shared", "support", "games", "other", "tools", "apps", "blog", "links", "go", "feedback", "get", "uploads", "downloads", "scripts", "signpost", "admin", "backup", "index"];
   const all = () => store.read(FILE), clip = (s, n) => String(s || "").trim().slice(0, n);
@@ -23,10 +23,10 @@ module.exports = ({ page, h1, esc, hidden, verifyCsrf }) => {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${esc(p.title)} | ${esc(BRAND)}</title>
+<title>${esc(p.title)} | ${esc(brand.name)}</title>
 <meta name="description" content="${esc(p.description || p.title)}">
 <link rel="canonical" href="${esc(SITE_URL + urlOf(p))}">
-<meta property="og:type" content="website"><meta property="og:site_name" content="${esc(BRAND)}"><meta property="og:title" content="${esc(p.title)}"><meta property="og:description" content="${esc(p.description || p.title)}"><meta property="og:url" content="${esc(SITE_URL + urlOf(p))}"><meta property="og:image" content="${esc(SITE_URL)}/shared/img/og.jpg"><meta name="twitter:card" content="summary_large_image">
+<meta property="og:type" content="website"><meta property="og:site_name" content="${esc(brand.name)}"><meta property="og:title" content="${esc(p.title)}"><meta property="og:description" content="${esc(p.description || p.title)}"><meta property="og:url" content="${esc(SITE_URL + urlOf(p))}"><meta property="og:image" content="${esc(SITE_URL)}/shared/img/og.jpg"><meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="/shared/tds.css">
 <style>.post{max-width:44rem}.post img{max-width:100%;height:auto;border-radius:1rem}.post pre{overflow-x:auto;background:var(--card);padding:1rem;border-radius:1rem}.post code{background:var(--card);padding:.1rem .35rem;border-radius:.4rem}</style>
 </head>
@@ -113,5 +113,6 @@ ${inner}
     if (fs.existsSync(dirOf(rec))) return "blocked";
     writeFiles(rec); store.write(FILE, list.concat(rec)); await rebuild(); return "created";
   };
-  return { admin, ensure };
+  const rebuildAll = async () => { all().filter(p => p.status === "published").forEach(writeFiles); await rebuild(); };   // after a rename, so page titles carry the new site name
+  return { admin, ensure, rebuildAll };
 };

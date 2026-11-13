@@ -52,8 +52,10 @@ You can change the name, tagline, colors, font, logo, menu, footer columns, home
 
 ## Adding content
 
-* **Blog, Links, Apps, Pages, Social posts, Feedback, Traffic, Firewall, Backup**: all in the admin dashboard.
+* **Blog, Links, Apps, Pages, Social posts, Feedback, Traffic, Firewall, Backup, Maintenance**: all in the admin dashboard. (Maintenance closes the whole site behind your own message while you work.)
 * **Games, 3D Things, Tools**: upload a page or a folder (with an `index.html`) into `/var/www/vibepress/site/games/`, `.../other/` or `.../tools/` and it appears in the listing within 5 minutes. Or create pages straight from the admin **Pages** tool.
+
+* **Plugins**: add features from `.vpplugin` files in **Admin > Plugins**, or make your own with an AI using `plugin-kit/PLUGIN-AI-PROMPT.md`. See `docs/PLUGINS.md` for how they are kept safe.
 
 ## Updating
 
@@ -92,3 +94,6 @@ sudo rm -r /var/www/vibepress        # deletes your site and data: make a backup
 * The font loads from Google Fonts by default (the privacy policy mentions this). Set `"font": {"import": ""}` in brand.json to use your device's fonts instead.
 * Section folders (`games`, `other`, `tools`) keep their addresses; you can rename their titles freely.
 * See `LICENSE.txt` for the terms.
+
+## Credits
+See `CREDITS.md`.

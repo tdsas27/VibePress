@@ -1,0 +1,10 @@
+{
+  "id": "hit-counter",
+  "name": "Hit Counter",
+  "version": "1.0.0",
+  "author": "VibePress",
+  "description": "A retro page-hit counter. Shows how a plugin with server code works: it runs in a sandbox and keeps its count in its own storage.",
+  "vibepress": "0.2.0",
+  "pages": [{ "title": "Hit Counter", "path": "index.html" }],
+  "server": "server.js"
+}

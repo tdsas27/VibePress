@@ -4,7 +4,7 @@ File: `/var/www/vibepress/brand.json`. After editing, run `cd /var/www/vibepress
 
 | Setting | What it does |
 |---|---|
-| `name` | Site name (menu, footer, titles, home page, admin sign-in code). Also set `SITE_NAME` in `app/.env` and run `sudo systemctl restart vibepress`. |
+| `name` | Site name (menu, footer, titles, home page, admin sign-in code). Easiest to change in **Admin > Site name** (no restart needed); the installer's `SITE_NAME` in `app/.env` is only a fallback. |
 | `tagline` | Line under the name on the home page and in search results. |
 | `domain` | Used for canonical addresses and sharing tags. |
 | `logo` | Round logo used in the footer and 404 page. |

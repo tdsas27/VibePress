@@ -6,6 +6,7 @@ server {
     index index.html;
 
     include __APP_DIR__/data/nginx-firewall.conf;     # block rules written by the admin Firewall page
+    include __APP_DIR__/data/nginx-maintenance.conf;  # closed-site rules written by the admin Maintenance page (empty while the site is open)
 
     error_page 404 /404.html;
     gzip on;
@@ -16,6 +17,7 @@ server {
     location = /404.html { internal; }
     location /shared/img/ { expires 30d; add_header Cache-Control "public"; try_files $uri =404; }
     location /uploads/ { expires 30d; add_header X-Content-Type-Options nosniff; try_files $uri =404; }
+    include __APP_DIR__/data/nginx-plugins.conf;      # plugin pages and plugin API (see plugins.conf.template)
     location /downloads/ { add_header X-Content-Type-Options nosniff; try_files $uri =404; }
 
     # Admin (hidden address, large uploads allowed here only)

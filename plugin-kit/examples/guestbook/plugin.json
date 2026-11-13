@@ -1,0 +1,20 @@
+{
+  "id": "guestbook",
+  "name": "Guestbook",
+  "version": "1.0.1",
+  "author": "VibePress",
+  "description": "Visitors leave a short message. You approve each one in Admin > Plugins before it shows. No server code needed.",
+  "vibepress": "0.2.0",
+  "pages": [{ "title": "Guestbook", "path": "index.html" }],
+  "collections": {
+    "messages": {
+      "fields": {
+        "name": { "type": "string", "max": 40, "required": true },
+        "message": { "type": "string", "max": 280, "required": true },
+        "mood": { "type": "choice", "options": ["happy", "curious", "silly"] }
+      },
+      "approval": "manual",
+      "maxItems": 300
+    }
+  }
+}

@@ -10,7 +10,7 @@ const DATA = path.join(__dirname, "data", "admin.json");
 const SESSION_MS = 2 * 60 * 60 * 1000, PENDING_MS = 5 * 60 * 1000;
 if ((process.env.SESSION_SECRET || "").length < 32) { console.error("Set SESSION_SECRET (32+ characters) in .env"); process.exit(1); }
 authenticator.options = { window: 1 };
-const BRAND = process.env.SITE_NAME || "VibePress";                    // white-label: shown in page titles
+const brand = require("./brand");                                                  // white-label site name, read live from brand.json
 const SITE_URL = (process.env.SITE_URL || "http://localhost").replace(/\/+$/, "");
 const { AsyncLocalStorage } = require("async_hooks"), als = new AsyncLocalStorage(), store = require("./store");
 const seoCfg = () => Object.assign({ index: true, description: "", image: "/shared/img/og.jpg" }, store.read("seo.json", {}));
@@ -37,9 +37,9 @@ const seoTags = (title, o) => {                                       // canonic
   if (!h.includes('property="og:url"')) t += `<meta property="og:url" content="${esc(url)}">`;
   if (!h.includes('property="og:type"')) t += '<meta property="og:type" content="website">';
   if (!h.includes('property="og:image"')) t += `<meta property="og:image" content="${esc(img)}">`;
-  return t + `<meta property="og:site_name" content="${esc(BRAND)}"><meta name="twitter:card" content="summary_large_image">`;
+  return t + `<meta property="og:site_name" content="${esc(brand.name)}"><meta name="twitter:card" content="summary_large_image">`;
 };
-const page = (title, body, o = {}) => `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${robotsTag(o)}${o.head || ""}${seoTags(title, o)}<title>${esc(title)} | ${esc(BRAND)}</title><link rel="stylesheet" href="/shared/tds.css"><style>form{display:grid;gap:.9rem;max-width:24rem}label{display:grid;gap:.3rem;font-weight:600}input{font:inherit;padding:.65rem .8rem;border-radius:.8rem;border:2px solid var(--line);background:var(--card);color:var(--ink)}button{font:inherit;font-weight:700;padding:.7rem 1.2rem;border:0;border-radius:2rem;background:var(--purple);color:var(--onaccent);cursor:pointer}.err{color:var(--red);font-weight:600}</style></head><body><div id="tds-header"></div><main>${body}</main><div id="tds-footer"></div><script src="/shared/tds.js"></script></body></html>`;
+const page = (title, body, o = {}) => `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${robotsTag(o)}${o.head || ""}${seoTags(title, o)}<title>${esc(title)} | ${esc(brand.name)}</title><link rel="stylesheet" href="/shared/tds.css"><style>form{display:grid;gap:.9rem;max-width:24rem}label{display:grid;gap:.3rem;font-weight:600}input{font:inherit;padding:.65rem .8rem;border-radius:.8rem;border:2px solid var(--line);background:var(--card);color:var(--ink)}button{font:inherit;font-weight:700;padding:.7rem 1.2rem;border:0;border-radius:2rem;background:var(--purple);color:var(--onaccent);cursor:pointer}.err{color:var(--red);font-weight:600}</style></head><body><div id="tds-header"></div><main>${body}</main><div id="tds-footer"></div><script src="/shared/tds.js"></script></body></html>`;
 const h1 = t => `<h1 class="bubble" style="font-size:clamp(2.2rem,8vw,3.5rem);margin:.5rem 0">${t}</h1>`;
 const hidden = req => `<input type="hidden" name="_csrf" value="${csrf(req)}">`;
 const loginPage = (req, err) => page("Admin login", `${h1("Admin")}${err ? `<p class="err">${esc(err)}</p>` : ""}<form method="post" action="/admin/login">${hidden(req)}<label>Username<input name="username" autocomplete="username" required></label><label>Password<input type="password" name="password" autocomplete="current-password" required></label><button>Continue</button></form>`);
@@ -107,12 +107,15 @@ r.post("/verify", limiter, verifyCsrf, (req, res) => {
 });
 
 r.get("/", requireAuth, (req, res) => {
-  const tiles = [["✍️", "Blog", "var(--purple)", "/admin/blog/"], ["🔗", "Links", "var(--blue)", "/admin/links/"], ["💬", "Feedback", "var(--green)", "/admin/feedback/"], ["📣", "Social posts", "var(--orange)", "/admin/social/"], ["📱", "Apps", "var(--red)", "/admin/apps/"], ["🛡️", "Firewall", "var(--yellow)", "/admin/firewall/"], ["💾", "Backup", "var(--green)", "/admin/backup/"], ["📝", "Pages", "var(--blue)", "/admin/pages/"], ["🦶", "Footer", "var(--orange)", "/admin/site/footer"], ["🔎", "SEO", "var(--green)", "/admin/site/seo"], ["📈", "Traffic", "var(--blue)", "/admin/traffic/"], ["🧭", "Menu", "var(--purple)", "/admin/menu/"], ["🎨", "Theme", "var(--orange)", "/admin/theme/"]]
-    .map(([i, n, c, href]) => `<li>${href ? `<a class="card" href="${href}"` : '<div class="card"'} style="--c:${c}"><span class="ico">${i}</span><h2>${n}</h2><p>${href ? "Open" : "Coming next"}</p>${href ? "</a>" : "</div>"}</li>`).join("");
-  res.send(page("Dashboard", `${h1("Dashboard")}<p style="color:var(--muted)">You are signed in. Pick a section to manage.</p><ul class="grid">${tiles}</ul><form method="post" action="/admin/logout" style="margin-top:2rem">${hidden(req)}<button>Sign out</button></form>`));
+  const tiles = [["✍️", "Blog", "var(--purple)", "/admin/blog/"], ["🔗", "Links", "var(--blue)", "/admin/links/"], ["💬", "Feedback", "var(--green)", "/admin/feedback/"], ["📣", "Social posts", "var(--orange)", "/admin/social/"], ["📱", "Apps", "var(--red)", "/admin/apps/"], ["🛡️", "Firewall", "var(--yellow)", "/admin/firewall/"], ["💾", "Backup", "var(--green)", "/admin/backup/"], ["📝", "Pages", "var(--blue)", "/admin/pages/"], ["🦶", "Footer", "var(--orange)", "/admin/site/footer"], ["🔎", "SEO", "var(--green)", "/admin/site/seo"], ["📈", "Traffic", "var(--blue)", "/admin/traffic/"], ["🏷️", "Site name", "var(--yellow)", "/admin/site/name"], ["🧭", "Menu", "var(--purple)", "/admin/menu/"], ["🎨", "Theme", "var(--orange)", "/admin/theme/"], ["🧩", "Plugins", "var(--green)", "/admin/plugins/"], ["🚧", "Maintenance", "var(--red)", "/admin/maintenance/"], ["⬆️", "Updates", "var(--red)", "/admin/updates/"]]
+    .map(([i, n, c, href]) => `<li>${href ? `<a class="card" href="${href}"` : '<div class="card"'} style="--c:${c}"><span class="ico">${i}</span><h2>${n}</h2><p>${href === "/admin/maintenance/" && maint.isOn() ? "ON: site closed" : href ? "Open" : "Coming next"}</p>${href ? "</a>" : "</div>"}</li>`).join("");
+  res.send(page("Dashboard", `${h1("Dashboard")}${maint.isOn() ? '<p class="err">🚧 Maintenance mode is ON: visitors see your closed-site message. <a href="/admin/maintenance/">Manage</a></p>' : ""}<p style="color:var(--muted)">You are signed in. Pick a section to manage.</p><ul class="grid">${tiles}</ul><form method="post" action="/admin/logout" style="margin-top:2rem">${hidden(req)}<button>Sign out</button></form>`));
 });
 r.post("/logout", verifyCsrf, (req, res) => { req.session = null; res.clearCookie("tds_admin", { path: "/" }); res.redirect("/admin/login"); });
 
+const maint = require("./maintenance")({ page, h1, esc, hidden, verifyCsrf, A });      // maintenance mode: closes the public pages, keeps the admin open
+app.use(maint.guard);
+r.use("/maintenance", requireAuth, maint.admin);
 const blog = require("./blog")({ page, h1, esc, hidden, verifyCsrf, ld });
 r.use("/blog", requireAuth, blog.admin);
 const links = require("./links")({ page, h1, esc, hidden, verifyCsrf });
@@ -145,9 +148,16 @@ const menu = require("./menu")({ page, h1, esc, hidden, verifyCsrf });
 r.use("/menu", requireAuth, menu.admin);
 const theme = require("./theme")({ page, h1, esc, hidden, verifyCsrf });
 r.use("/theme", requireAuth, theme.admin);
+const plugins = require("./plugins")({ page, h1, esc, hidden, verifyCsrf, siteInfo: () => ({ name: brand.name, url: SITE_URL }),
+  listPages: () => store.read("pages.json", []).filter(p => p.status === "published").map(p => ({ title: p.title, url: "/" + (p.section === "root" ? "" : p.section + "/") + p.slug + "/" })) });
+r.use("/plugins", requireAuth, plugins.admin);
+app.use("/x-api", plugins.pub);
 const site = require("./site")({ page, h1, esc, hidden, verifyCsrf, pagesApi: pages, SITE_URL });
+const updater = require("./updater")({ page, h1, esc, hidden, verifyCsrf });
+r.use("/updates", requireAuth, updater.admin);
 r.use("/site", requireAuth, site.admin);
 site.start();
+maint.start();
 app.use(A, r);
 app.use((req, res) => res.status(404).send(page("Not found", "<p>Not found.</p>")));
 app.listen(PORT, "127.0.0.1", () => console.log("vibepress listening on 127.0.0.1:" + PORT + " (admin at " + A + "/)"));

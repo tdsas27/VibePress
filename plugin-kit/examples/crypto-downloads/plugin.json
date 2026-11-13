@@ -1,0 +1,65 @@
+{
+  "id": "crypto-downloads",
+  "name": "Crypto Downloads",
+  "version": "1.0.2",
+  "author": "VibePress",
+  "description": "Sell digital downloads for Bitcoin, Ethereum and TON. Payments go straight to your own wallets; a file is released only after the payment is seen on the blockchain.",
+  "license": "MIT",
+  "vibepress": "0.3.0",
+  "timeout": 10,
+  "permissions": ["files:private", "net:mempool.space", "net:blockstream.info", "net:eth.blockscout.com", "net:tonapi.io", "net:toncenter.com"],
+  "pages": [{ "title": "Shop", "path": "index.html" }],
+  "server": "server.js",
+  "settings": {
+    "fields": {
+      "btc_address": { "type": "string", "max": 100, "check": "btc-address", "label": "Your Bitcoin address", "help": "Where Bitcoin payments go. Leave empty to not accept Bitcoin. Use an address from a wallet you control." },
+      "eth_address": { "type": "string", "max": 100, "check": "eth-address", "label": "Your Ethereum address", "help": "Where Ether (ETH) payments go. Leave empty to not accept Ethereum." },
+      "ton_address": { "type": "string", "max": 100, "check": "ton-address", "label": "Your TON address", "help": "Where Toncoin payments go. Leave empty to not accept TON." },
+      "btc_confirmations": { "type": "number", "min": 1, "max": 6, "default": 1, "label": "Bitcoin confirmations needed", "help": "1 is fine for small purchases; use more for expensive files." },
+      "eth_confirmations": { "type": "number", "min": 1, "max": 64, "default": 12, "label": "Ethereum confirmations needed" },
+      "order_minutes": { "type": "number", "min": 15, "max": 180, "default": 60, "label": "Minutes a buyer has to pay", "help": "Payments that arrive up to 3 hours later are still matched." },
+      "max_downloads": { "type": "number", "min": 1, "max": 20, "default": 5, "label": "Downloads allowed per purchase" },
+      "access_days": { "type": "number", "min": 1, "max": 365, "default": 30, "label": "Days a purchase stays downloadable" }
+    },
+    "lists": {
+      "products": {
+        "label": "Products",
+        "max": 30,
+        "fields": {
+          "title": { "type": "string", "max": 80, "required": true, "label": "Title" },
+          "description": { "type": "string", "max": 300, "label": "Short description" },
+          "file": { "type": "file", "required": true, "label": "File to sell", "help": "Upload files first under Files, then choose one here." },
+          "btc": { "type": "decimal", "label": "Price in BTC", "help": "For example 0.0005. Leave empty to not sell this for Bitcoin." },
+          "eth": { "type": "decimal", "label": "Price in ETH", "help": "For example 0.01" },
+          "ton": { "type": "decimal", "label": "Price in TON", "help": "For example 5" }
+        }
+      }
+    }
+  },
+  "collections": {
+    "orders": {
+      "labels": { "on": "Paid", "off": "Unpaid", "approve": "Mark as paid", "hide": "Mark as unpaid" },
+      "approval": "manual",
+      "publicRead": false,
+      "publicWrite": false,
+      "maxItems": 1500,
+      "fields": {
+        "code": { "type": "string", "max": 24, "required": true },
+        "memo": { "type": "string", "max": 12 },
+        "product": { "type": "string", "max": 12 },
+        "title": { "type": "string", "max": 80 },
+        "file": { "type": "string", "max": 12 },
+        "coin": { "type": "choice", "options": ["btc", "eth", "ton"] },
+        "address": { "type": "string", "max": 120 },
+        "amount": { "type": "string", "max": 40 },
+        "units": { "type": "string", "max": 40 },
+        "exp": { "type": "number", "min": 0, "max": 1e15 },
+        "status": { "type": "choice", "options": ["pending", "paid", "expired"] },
+        "txid": { "type": "string", "max": 100 },
+        "claims": { "type": "number", "min": 0, "max": 1000 },
+        "paidat": { "type": "number", "min": 0, "max": 1e15 },
+        "checked": { "type": "number", "min": 0, "max": 1e15 }
+      }
+    }
+  }
+}

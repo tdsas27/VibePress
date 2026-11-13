@@ -21,7 +21,7 @@ module.exports = ({ page, h1, esc, hidden, verifyCsrf }) => {
 
   const make = async (kind, withLogin, prefix = "tds") => {
     const name = `${prefix}-${kind}${withLogin ? "-login" : ""}-${stamp()}.tar.gz`, out = path.join(BDIR, name);
-    const entries = fs.readdirSync(DATA).filter(n => !n.endsWith(".tmp") && (withLogin || n !== "admin.json"));   // login file only when asked
+    const entries = fs.readdirSync(DATA).filter(n => !n.endsWith(".tmp") && !["plugin-files", "plugin-staging"].includes(n) && (withLogin || n !== "admin.json"));   // login file only when asked
     if (!entries.length && kind === "data") throw new Error("There is no data to back up yet.");
     const args = ["-czf", out, "--transform", "s,^\\./,site/,"];
     if (kind !== "data") { if (kind === "full") args.push("--exclude=./downloads"); args.push("-C", SITE, "."); }

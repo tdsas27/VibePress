@@ -12,6 +12,7 @@ module.exports = ({ page, h1, esc, hidden, verifyCsrf }) => {
     const c = [["Home", "/"], [title("games", "Games"), "/games/"], [title("other", "3D Things"), "/other/"], [title("tools", "Tools"), "/tools/"], ["Apps", "/apps/"], ["Blog", "/blog/"], ["Links", "/links/"], ["Feedback", "/feedback/"]];
     if (fs.existsSync(path.join(SITE, "support", "index.html"))) c.push(["Support", "/support/"]);
     store.read("pages.json").filter(p => p.status === "published").forEach(p => c.push([p.title, "/" + (p.section === "root" ? "" : p.section + "/") + p.slug + "/"]));
+    try { require("./plugins/registry").list().filter(p => p.enabled).forEach(p => p.pages.forEach(g => c.push([g.title, g.url]))); } catch { /* plugins not set up yet */ }
     return c;
   };
   const current = () => { const n = brandfile.read().nav; return Array.isArray(n) ? n.map(l => ({ label: String(l.label || ""), href: String(l.href || "") })) : defaults(); };
